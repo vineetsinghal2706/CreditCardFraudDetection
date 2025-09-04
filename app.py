@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
-import joblib
 import pandas as pd
+import joblib
 
 app = Flask(__name__)
 
 # Load trained model
-model = joblib.load("fraud_model.pkl")
+model = joblib.load("model.pkl")
 
 @app.route("/predict", methods=["POST"])
 def predict():
