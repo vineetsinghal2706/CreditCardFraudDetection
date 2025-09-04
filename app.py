@@ -5,7 +5,7 @@ import joblib
 app = Flask(__name__)
 
 # Load trained model
-model = joblib.load("model.pkl")
+model = joblib.load("fraud_model.pkl")
 
 @app.route("/predict", methods=["POST"])
 def predict():
