@@ -1,10 +1,14 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 import joblib
 
 # Load dataset
 data = pd.read_csv("creditcard.csv")
+
+# Use 150k rows for training
+train_data = data.iloc[:150000]
 
 # Prepare features and labels
 X = data.drop(['Class'], axis=1)
