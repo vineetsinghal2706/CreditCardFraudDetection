@@ -1,21 +1,28 @@
 from flask import Flask, request, jsonify
 import joblib
-import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
 
 # Load trained model
 model = joblib.load("fraud_model.pkl")
 
-@app.route("/")
-def home():
-    return {"message": "Credit Card Fraud Detection API"}
-
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.json["features"]  
-    prediction = model.predict([np.array(data)])
-    return jsonify({"fraud_prediction": int(prediction[0])})
+    file = request.files["file"]  # uploaded CSV
+    data = pd.read_csv(file)
+
+    if "Class" in data.columns:  # drop if present
+        data = data.drop("Class", axis=1)
+
+    preds = model.predict(data)
+    data["prediction"] = preds
+
+    # Return sample of predictions
+    return jsonify({
+        "rows": len(data),
+        "sample_predictions": data.head(10).to_dict(orient="records")
+    })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=8000)
