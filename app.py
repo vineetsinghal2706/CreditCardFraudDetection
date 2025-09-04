@@ -1,28 +1,41 @@
-from flask import Flask, request, jsonify
 import pandas as pd
-import joblib
+import pickle
+from flask import Flask, request, jsonify
+
+# Load trained model
+with open("fraud_model.pkl", "rb") as f:
+    model = pickle.load(f)
 
 app = Flask(__name__)
 
-# Load trained model
-model = joblib.load("fraud_model.pkl")
+@app.route("/", methods=["GET"])
+def home():
+    return {"message": "✅ Credit Card Fraud Detection API is running!"}
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    file = request.files["file"]  # uploaded CSV
-    data = pd.read_csv(file)
+    # Check if a file is uploaded
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
 
-    if "Class" in data.columns:  # drop if present
-        data = data.drop("Class", axis=1)
+    file = request.files["file"]
 
-    preds = model.predict(data)
-    data["prediction"] = preds
+    try:
+        data = pd.read_csv(file)
 
-    # Return sample of predictions
-    return jsonify({
-        "rows": len(data),
-        "sample_predictions": data.head(10).to_dict(orient="records")
-    })
+        # Drop target column if present
+        if "Class" in data.columns:
+            data = data.drop("Class", axis=1)
+
+        # Predict
+        preds = model.predict(data)
+
+        # Return JSON response
+        return jsonify({"predictions": preds.tolist()})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
