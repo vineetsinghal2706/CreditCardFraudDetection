@@ -1,41 +1,34 @@
+from fastapi import FastAPI, UploadFile, File
 import pandas as pd
-import joblib
-from flask import Flask, request, jsonify
+import mlflow.sklearn
 
-# Load trained model
-with open("fraud_model.pkl", "rb") as f:
-    model = joblib.load(f)
+app = FastAPI()
 
-app = Flask(__name__)
+# Load latest model from MLflow
+MODEL_URI = "models:/CreditCardFraudModel/1"  # v1 registered model
+model = mlflow.sklearn.load_model(MODEL_URI)
 
-@app.route("/", methods=["GET"])
+@app.get("/")
 def home():
-    return {"message": "✅ Credit Card Fraud Detection API is running!"}
+    return {"message": "Credit Card Fraud Detection API is running"}
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    # Check if a file is uploaded
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+    # Read uploaded CSV
+    contents = await file.read()
+    df = pd.read_csv(pd.compat.StringIO(contents.decode("utf-8")))
 
-    file = request.files["file"]
+    if "Class" in df.columns:
+        df = df.drop("Class", axis=1)
 
-    try:
-        data = pd.read_csv(file)
+    preds = model.predict(df)
+    df["prediction"] = preds
 
-        # Drop target column if present
-        if "Class" in data.columns:
-            data = data.drop("Class", axis=1)
+    fraud_count = int((df["prediction"] == 1).sum())
+    normal_count = int((df["prediction"] == 0).sum())
 
-        # Predict
-        preds = model.predict(data)
-
-        # Return JSON response
-        return jsonify({"predictions": preds.tolist()})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    return {
+        "total_records": len(df),
+        "fraudulent": fraud_count,
+        "normal": normal_count
+    }
