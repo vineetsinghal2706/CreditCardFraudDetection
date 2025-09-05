@@ -1,7 +1,5 @@
+flask
+scikit-learn
 pandas
 numpy
-scikit-learn
-mlflow
-fastapi
-uvicorn[standard]
-python-multipart
+joblib
