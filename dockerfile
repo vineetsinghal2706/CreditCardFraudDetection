@@ -10,6 +10,6 @@ COPY train.py app.py creditcard.csv ./
 # Train the model when building
 RUN python train.py
 
-EXPOSE 8000
+EXPOSE 5000
 
 CMD ["python", "app.py"]
