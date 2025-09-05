@@ -5,10 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY train.py app.py creditcard.csv ./
-
-# Train the model when building
-RUN python train.py
+COPY app.py fraud_model.pkl ./
 
 EXPOSE 5000
 
