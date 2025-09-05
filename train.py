@@ -4,6 +4,22 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 import joblib
 
+import os
+import sys
+
+
+file_path = "creditcard.csv"
+
+if not os.path.exists(file_path):
+    print(f"❌ Dataset not found: {file_path}")
+    sys.exit(1)
+
+data = pd.read_csv(file_path)
+
+if "Class" not in data.columns:
+    print(f"❌ 'Class' column not found in dataset. Available columns: {list(data.columns)}")
+    sys.exit(1)
+
 # Load dataset
 data = pd.read_csv("creditcard.csv")
 
