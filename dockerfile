@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app and trained model
 COPY app.py .
-COPY model.pkl .
+COPY fraud_model.pkl .
 
 EXPOSE 5000
 CMD ["python", "app.py"]
