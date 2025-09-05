@@ -49,6 +49,7 @@ with mlflow.start_run():
     # Log and register model
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="model",
+        name="model",
         registered_model_name="CreditCardFraudModel"
+        input_example=input_example
     )
