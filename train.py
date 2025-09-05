@@ -9,12 +9,15 @@ from mlflow.models.signature import infer_signature
 # -------------------------
 # Load first 150,000 rows
 # -------------------------
-data = pd.read_csv("creditcard.csv", nrows=150000)  # <-- only 150k rows
+data = pd.read_csv("creditcard.csv", nrows=150000)
 
 if "Class" not in data.columns:
     raise ValueError(f"'Class' column not found. Available columns: {list(data.columns)}")
 
-X = data.drop("Class", axis=1)
+# -------------------------
+# Convert feature columns to float64 to avoid MLflow warnings
+# -------------------------
+X = data.drop("Class", axis=1).astype("float64")
 y = data["Class"]
 
 # -------------------------
@@ -47,30 +50,4 @@ for k, v in metrics.items():
     print(f"{k.capitalize()}: {v:.4f}")
 
 # -------------------------
-# MLflow tracking
-# -------------------------
-experiment_name = "CreditCardFraudDetection"
-mlflow.set_experiment(experiment_name)
-
-# Infer model signature
-signature = infer_signature(X_train, model.predict(X_train))
-
-# Use first few rows as input example
-input_example = X_train.head(5)
-
-with mlflow.start_run() as run:
-    # Log metrics
-    for metric_name, metric_value in metrics.items():
-        mlflow.log_metric(metric_name, metric_value)
-
-    # Log model with signature and input example
-    mlflow.sklearn.log_model(
-        sk_model=model,
-        name="CreditCardFraudModel",
-        registered_model_name="CreditCardFraudModel",
-        signature=signature,
-        input_example=input_example
-    )
-
-    print(f"✅ MLflow Run completed: {run.info.run_id}")
-    print(f"Experiment ID: {run.info.experiment_id}")
+# MLflo
