@@ -1,42 +1,54 @@
 import pandas as pd
+import mlflow
+import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-import joblib
-
-import os
-import sys
-
-
-file_path = "creditcard.csv"
-
-if not os.path.exists(file_path):
-    print(f"❌ Dataset not found: {file_path}")
-    sys.exit(1)
-
-data = pd.read_csv(file_path)
-
-if "Class" not in data.columns:
-    print(f"❌ 'Class' column not found in dataset. Available columns: {list(data.columns)}")
-    sys.exit(1)
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # Load dataset
 data = pd.read_csv("creditcard.csv")
 
-# Use 150k rows for training
-train_data = data.iloc[:150000]
+# Ensure Class column exists
+if "Class" not in data.columns:
+    raise ValueError(f"'Class' column not found in dataset. Available columns: {list(data.columns)}")
 
-# Prepare features and labels
-X = data.drop(['Class'], axis=1)
-y = data['Class']
+# Split into features and target
+X = data.drop(["Class"], axis=1)
+y = data["Class"]
 
-# Train-test split
-xTrain, xTest, yTrain, yTest = train_test_split(X, y, test_size=0.2, random_state=42)
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
 # Train model
-rfc = RandomForestClassifier()
-rfc.fit(xTrain, yTrain)
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
 
-# Save model
-joblib.dump(rfc, "fraud_model.pkl")
-print("✅ Model trained and saved as fraud_model.pkl")
+# Predictions
+y_pred = model.predict(X_test)
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+
+print("✅ Model Trained")
+print(f"Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+
+# MLflow tracking
+mlflow.set_experiment("CreditCardFraudDetection")
+
+with mlflow.start_run():
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    mlflow.log_metric("f1_score", f1)
+
+    # Log and register model
+    mlflow.sklearn.log_model(
+        sk_model=model,
+        artifact_path="model",
+        registered_model_name="CreditCardFraudModel"
+    )
