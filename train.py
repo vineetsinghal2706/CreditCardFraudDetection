@@ -1,53 +1,31 @@
 import pandas as pd
-import mlflow
-import mlflow.sklearn
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from mlflow.models.signature import infer_signature
+from sklearn.metrics import classification_report
 
-# -------------------------
-# Load first 150,000 rows
-# -------------------------
-data = pd.read_csv("creditcard.csv", nrows=150000)
+# Load dataset
+data = pd.read_csv("creditcard.csv")
 
-if "Class" not in data.columns:
-    raise ValueError(f"'Class' column not found. Available columns: {list(data.columns)}")
+# Use 150k rows for training
+train_data = data.iloc[:150000]
 
-# -------------------------
-# Convert feature columns to float64 to avoid MLflow warnings
-# -------------------------
-X = data.drop("Class", axis=1).astype("float64")
-y = data["Class"]
+X = train_data.drop("Class", axis=1)
+y = train_data["Class"]
 
-# -------------------------
-# Train/Test split
-# -------------------------
-X_train, X_test, y_train, y_test = train_test_split(
+# Train/test split (80/20 inside 150k subset)
+X_train, X_val, y_train, y_val = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# -------------------------
-# Train model
-# -------------------------
+# Train RandomForest
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# -------------------------
-# Predictions & metrics
-# -------------------------
-y_pred = model.predict(X_test)
+# Evaluate
+y_pred = model.predict(X_val)
+print(classification_report(y_val, y_pred))
 
-metrics = {
-    "accuracy": accuracy_score(y_test, y_pred),
-    "precision": precision_score(y_test, y_pred),
-    "recall": recall_score(y_test, y_pred),
-    "f1_score": f1_score(y_test, y_pred)
-}
-
-print("✅ Model Trained")
-for k, v in metrics.items():
-    print(f"{k.capitalize()}: {v:.4f}")
-
-# -------------------------
-# MLflo
+# Save model
+joblib.dump(model, "fraud_model.pkl")
+print("✅ Model saved as fraud_model.pkl")
