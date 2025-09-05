@@ -50,6 +50,6 @@ with mlflow.start_run():
     mlflow.sklearn.log_model(
         sk_model=model,
         name="model",
-        registered_model_name="CreditCardFraudModel"
+        registered_model_name="CreditCardFraudModel",
         input_example=input_example
     )
