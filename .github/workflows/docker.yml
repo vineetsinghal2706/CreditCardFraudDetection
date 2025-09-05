@@ -60,6 +60,3 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/creditcard-fraud-app:latest
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/creditcard-fraud-app:latest
